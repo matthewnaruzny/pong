@@ -33,28 +33,34 @@ const Paddle = {
 };
 
 const Game = {
-    play: true,
+    play: false,
+    game_end: false,
     score_count: [0, 0],
     init: function () {
         // Initialize Game Components
         this.build();
-        // Start Listener
-        document.addEventListener('keydown', (key) => {
-            if (key.code === "ArrowUp") {
-                this.p1paddle.ydir = Direction.UP;
-            }
+        this.init_listener();
+        this.menu();
 
-            if (key.code === "ArrowDown") {
-                this.p1paddle.ydir = Direction.DOWN;
+    },
+    init_listener: function(){
+        document.addEventListener('keydown', (key) => {
+            if(this.play) {
+                if (key.code === "ArrowUp") {
+                    this.p1paddle.ydir = Direction.UP;
+                }
+
+                if (key.code === "ArrowDown") {
+                    this.p1paddle.ydir = Direction.DOWN;
+                }
+            } else if (!game.game_end){
+                this.start();
             }
         })
 
         document.addEventListener('keyup', (key) => {
             this.p1paddle.ydir = Direction.NONE;
         })
-        if (this.play) {
-            window.requestAnimationFrame(Game.update)
-        }
     },
     build: function(){
         this.ball = Ball.new();
@@ -66,11 +72,32 @@ const Game = {
         this.p2paddle.xpos = canvas.width - this.p2paddle.w - 20;
         this.p2paddle.yvel = this.p2paddle.yvel - 1;
     },
+    menu : function () {
+        this.update_draw();
+        ctx.beginPath();
+        ctx.font = "25px Arial";
+        ctx.fillText("Click any key to begin", (canvas.width/2)-(canvas.width/3), (canvas.height/2))
+        ctx.closePath();
+    },
+    start: function (){
+        this.play = true;
+        window.requestAnimationFrame(Game.update)
+    },
+    end: function(){
+        this.update_draw();
+        ctx.beginPath();
+        ctx.font = "25px Arial";
+        ctx.fillText(("Player " + this.winner + " wins!"), (canvas.width/2)-(canvas.width/3), (canvas.height/2))
+        ctx.closePath();
+    },
     update: function () {
         Game.update_phys();
         Game.update_draw();
         if (Game.play) {
             window.requestAnimationFrame(Game.update)
+        }
+        if(Game.game_end){
+            Game.end()
         }
 
     },
@@ -189,11 +216,9 @@ const Game = {
                 winner = 2;
             }
             game.play = false;
-            ctx.beginPath()
-            ctx.font = "30px Arial";
-            ctx.fillText("Player " + winner + " Wins!", canvas.width, canvas.height / 2);
+            game.game_end = true;
             console.log("Player " + winner + " Wins!");
-            ctx.closePath()
+            this.winner = winner;
         } else {
             this.reset();
         }
